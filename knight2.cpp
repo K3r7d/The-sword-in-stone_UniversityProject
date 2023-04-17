@@ -54,17 +54,15 @@ string BaseKnight::toString() const {
     return s;
 }
 BaseKnight* BaseKnight::create(int id, int maxhp, int level, int gil, int antidote, int phoenixdownI) {
-    BaseKnight* knight = nullptr;
     if (isPrime(maxhp)) {
         return new PaladinKnight(id, maxhp, level, gil, new BaseBag(antidote, phoenixdownI));
     } else if (maxhp == 888) {
-        knight = new LancelotKnight(id, maxhp, level, gil, new BaseBag(antidote, phoenixdownI));
+        return new LancelotKnight(id, maxhp, level, gil, new BaseBag(antidote, phoenixdownI));
     } else if (isPythagorean(maxhp)) {
-        knight = new DragonKnight(id, maxhp, level, gil, new BaseBag(antidote, phoenixdownI));
+        return new DragonKnight(id, maxhp, level, gil, new BaseBag(antidote, phoenixdownI));
     } else {
-        knight = new NormalKnight(id, maxhp, level, gil, new BaseBag(antidote, phoenixdownI));
+        return new NormalKnight(id, maxhp, level, gil, new BaseBag(antidote, phoenixdownI));
     }
-    return knight;
 }
 class PaladinKnight : public BaseKnight {
 public:
@@ -76,9 +74,7 @@ public:
         this->bag = bag;
         this->knightType = PALADIN;
     }
-    bool fight(BaseOpponent*opponent) override {
-        
-    };
+
 };
 
 class LancelotKnight : public BaseKnight {
@@ -134,7 +130,9 @@ class BaseOpponent{
     BaseOpponent(int event, int event_now,int gil,int basedamage){
 
     };
-
+    int getlevel(){};
+    int getGil(){};
+    int getBasedame(){};
 };
 
 class MadBear:public BaseOpponent{
@@ -172,19 +170,35 @@ void ArmyKnights::printInfo() const {
         << endl
         << string('-', 50) << endl;
 }
-
+//Constructor ArmyKnights
 ArmyKnights::ArmyKnights(const string & file_armyknights){
     ifstream file_in(file_armyknights);
     file_in>>num_of_knight;
-    BaseKnight*knight = 
+    file_in.ignore(999,'/n');
+    knight = new BaseKnight[num_of_knight];
     for(int i =0;i<num_of_knight;i++){
-
+        int maxhp,level,gil,antidote,phoenixdown;
+        file_in >> maxhp >>level >>phoenixdown>> gil >> antidote;
+        knight[i].create(i+1,maxhp,level,gil,antidote,phoenixdown);
     }
 }
+//Destructor ArmyKnights
+ArmyKnights::~ArmyKnights(){delete[] knight;};
 
 void ArmyKnights::printResult(bool win) const {
     cout << (win ? "WIN" : "LOSE") << endl;
 }
+
+bool ArmyKnights::fight(BaseOpponent * opponent){
+    
+}
+
+bool ArmyKnights::adventure (Events * events){
+
+}
+int ArmyKnights::count() const{
+    return num_of_knight;
+};
 
 /* * * END implementation of class ArmyKnights * * */
 
