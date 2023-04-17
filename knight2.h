@@ -38,7 +38,6 @@ protected:
 public:
     static BaseKnight * create(int id, int maxhp, int level, int gil, int antidote, int phoenixdownI);
     string toString() const;
-    virtual bool fight(BaseOpponent*opponent) =0;
 };
 
 class ArmyKnights {
