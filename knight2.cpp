@@ -23,19 +23,61 @@ bool isPythagorean(int num) {
     }
 }
 
-
 /*----------------------------------------------------*/
 /* * * BEGIN implementation of class BaseBag * * */
 class BaseBag {
 public:
     BaseBag(int antidote, int phoe){
-        
+        this->antidote = antidote;
+        this->phoenixdown = phoe;
     };
-    virtual bool insertFirst(BaseItem * item);
+    virtual bool insertFirst(BaseItem * item){
+    };
     virtual BaseItem * get(ItemType itemType);
     virtual string toString() const;
 };
 /* * * END implementation of class BaseBag * * */
+
+
+/* * * BEGIN implementation of class BaseItem * * */
+bool PhoenixDown::canUse(BaseKnight *knight){
+    int hp = knight->gethp();
+    int maxhp = knight->getmaxhp();
+    if(typeofphoenixdown == 1){
+        if(hp<=0) return true;
+        else return false;
+    } else if (typeofphoenixdown ==2){
+        if(hp<maxhp/4) return true;
+        else return false;
+    } else if(typeofphoenixdown ==3){
+        if(hp<maxhp/3) return true;
+        else return false;
+    } else if(typeofphoenixdown ==4){
+        if(hp<maxhp/2) return true;
+        else return false;
+}
+
+void PhoenixDown::use(BaseKnight * knight){
+    int hp = knight->gethp();
+    int maxhp = knight->getmaxhp();
+    if(canuse(knight)){
+        if(typeofphoenixdown == 1 ){
+            knight->changehp(maxhp);
+        } else if (typeofphoenixdown ==2){
+            knight->changehp(maxhp);
+        } else if(typeofphoenixdown ==3){
+            if (hp<=0) knight->changehp(maxhp/3);
+            else knight->changehp(hp+maxhp/4);
+        } else if(typeofphoenixdown ==4){
+            if(hp<=0) knight->changehp(maxhp/2);
+            else knight->changehp(hp+maxhp/5);
+        }
+    }
+}
+
+
+
+/* * * END implementation of class BaseItem * * */
 
 /* * * BEGIN implementation of class BaseKnight * * */
 string BaseKnight::toString() const {
@@ -52,107 +94,88 @@ string BaseKnight::toString() const {
         + "knight_type:" + typeString[knightType]
         + "]";
     return s;
-}
+};
+
+
 BaseKnight* BaseKnight::create(int id, int maxhp, int level, int gil, int antidote, int phoenixdownI) {
+    BaseKnight * knight = nullptr;
     if (isPrime(maxhp)) {
-        return new PaladinKnight(id, maxhp, level, gil, new BaseBag(antidote, phoenixdownI));
+        knight = new PaladinKnight(id, maxhp, level, gil, new BaseBag(antidote, phoenixdownI));
     } else if (maxhp == 888) {
-        return new LancelotKnight(id, maxhp, level, gil, new BaseBag(antidote, phoenixdownI));
+        knight = new LancelotKnight(id, maxhp, level, gil, new BaseBag(antidote, phoenixdownI));
     } else if (isPythagorean(maxhp)) {
-        return new DragonKnight(id, maxhp, level, gil, new BaseBag(antidote, phoenixdownI));
+        knight = new DragonKnight(id, maxhp, level, gil, new BaseBag(antidote, phoenixdownI));
     } else {
-        return new NormalKnight(id, maxhp, level, gil, new BaseBag(antidote, phoenixdownI));
+        knight = new NormalKnight(id, maxhp, level, gil, new BaseBag(antidote, phoenixdownI));
     }
+    return knight;
 }
-class PaladinKnight : public BaseKnight {
-public:
-    PaladinKnight(int id, int maxhp, int level, int gil, BaseBag* bag) {
-        this->id = id;
-        this->maxhp = maxhp;
-        this->level = level;
-        this->gil = gil;
-        this->bag = bag;
-        this->knightType = PALADIN;
-    }
 
-};
-
-class LancelotKnight : public BaseKnight {
-public:
-    LancelotKnight(int id, int maxhp, int level, int gil, BaseBag* bag) {
-        this->id = id;
-        this->maxhp = maxhp;
-        this->level = level;
-        this->gil = gil;
-        this->bag = bag;
-        this->knightType = LANCELOT;
+bool PaladinKnight::fight(BaseOpponent * opponent) {
+    int type = opponent->getType();
+    if (type<=5 && type>=1) {
+        WinCreeps(opponent);
+        
+        }
+    else if (this->level >= opponent->getLevel()){
+        if(type==meet_Tornbery){
+            WinTornbery();
+        
+        }else WinQueenofCard();
+    }else if(type == meet_Tornbery){
+        LoseTornbery();
     }
-    bool fight(BaseOpponent*opponent) override{
+    HpDown();
+    return this->hp>0 ? true : false;
+}
+
+bool LancelotKnight::fight(BaseOpponent * opponent) {
+    int type = opponent->getType();
+    if (type<=5 && type>=1) {
+        WinCreeps(opponent);
+        }
+    else if(this->level >= opponent->getLevel()){
+        if(type==meet_Tornbery){
+            WinTornbery();
+        }else WinQueenofCard();
+    }else if(type == meet_Tornbery){
+        LoseTornbery();
+    }
+    HpDown();
+    return this->hp>0 ? true : false;
+    
+        
+} 
+
+bool DragonKnight::fight(BaseOpponent * opponent) {
+    int type = opponent->getType();
+    if(this->level >= opponent->getLevel()){
+        if(type<=5)
+        
+        if(type==meet_Tornbery){
+            WinTornbery();
+        }else WinQueenofCard();
+    }else if(type == meet_Tornbery){
+        LoseTornbery();
+    } 
+}
+
+bool BaseKnight::HpDown()
+{
+    if (bag->useItem(PhoenixDown, this)) return true;
+    if (this->gil >= 100)
+    {
+        this->hp = this->maxhp / 2;
+        this->gil -= 100;
         return true;
-    };
-};
-
-class DragonKnight : public BaseKnight {
-public:
-    DragonKnight(int id, int maxhp, int level, int gil, BaseBag* bag) {
-        this->id = id;
-        this->maxhp = maxhp;
-        this->level = level;
-        this->gil = gil;
-        this->bag = bag;
-        this->knightType = DRAGON;
     }
-    bool fight(BaseOpponent*opponent) override{
-        return true;
-    };
-};
-
-class NormalKnight : public BaseKnight {
-public:
-    NormalKnight(int id, int maxhp, int level, int gil, BaseBag* bag) {
-        this->id = id;
-        this->maxhp = maxhp;
-        this->level = level;
-        this->gil = gil;
-        this->bag = bag;
-        this->knightType = NORMAL;
-    }
-    bool fight(BaseOpponent*opponent) override{
-        return true;
-    };
-};
+    return false;
+}
 
 /* * * END implementation of class BaseKnight * * */
 
 /* * * class Base opponent * * */
-class BaseOpponent{
-    public:
-    BaseOpponent(int event, int event_now,int gil,int basedamage){
 
-    };
-    int getlevel(){};
-    int getGil(){};
-    int getBasedame(){};
-};
-
-class MadBear:public BaseOpponent{
-    public:
-    {
-        
-    }
-};
-class Bandit:public BaseOpponent{
-    public:
-};
-class LordLupin:public BaseOpponent{};
-class Elf:public BaseOpponent{};
-class Troll:public BaseOpponent{};
-class Tornbery:public BaseOpponent{};
-class QueenOfCards:public BaseOpponent{};
-class NinaDeRings:public BaseOpponent{};
-class DurianGarden:public BaseOpponent{};
-class OmegaWeapon:public BaseOpponent{};
-class Hades:public BaseOpponent{};
 /* * * class Base opponent * * */
 
 
@@ -175,32 +198,159 @@ ArmyKnights::ArmyKnights(const string & file_armyknights){
     ifstream file_in(file_armyknights);
     file_in>>num_of_knight;
     file_in.ignore(999,'/n');
-    knight = new BaseKnight[num_of_knight];
+    knights = new BaseKnight*[num_of_knight];
     for(int i =0;i<num_of_knight;i++){
         int maxhp,level,gil,antidote,phoenixdown;
         file_in >> maxhp >>level >>phoenixdown>> gil >> antidote;
-        knight[i].create(i+1,maxhp,level,gil,antidote,phoenixdown);
+        knights[i] = BaseKnight::create(i+1,maxhp,level,gil,antidote,phoenixdown);
     }
 }
 //Destructor ArmyKnights
-ArmyKnights::~ArmyKnights(){delete[] knight;};
+ArmyKnights::~ArmyKnights(){
+    for(int i =0;i<num_of_knight;i++){
+        delete knights[i];
+    }
+    delete[] knights;
+    knights = nullptr;
+    num_of_knight = 0;
+}
+
+int ArmyKnights::count() const{
+    return num_of_knight;
+};
 
 void ArmyKnights::printResult(bool win) const {
     cout << (win ? "WIN" : "LOSE") << endl;
 }
 
-bool ArmyKnights::fight(BaseOpponent * opponent){
-    
+void delete_last_knight(){
+    delete knights[num_of_knight-1];
+    num_of_knight--;
 }
 
-bool ArmyKnights::adventure (Events * events){
+bool ArmyKnights::fight_1_to_5(int event_ordered, int event_id){
+    int type = opponent->getType();
+    int lvO = (event_ordered+event_id)%10+1;
+    Baseopponent * opponent = new BaseOpponent(event_id, gils[event_id], basedames[event_id], lvO);
+    for(int i =num_of_knight;i>=0;i--){
+        if(knight[i]->fight(opponent)){
+            int gil = knight[i]->getGil();
+            if (gil>999){
+                knight[i]->changeGil(999);
+                passGil(gil-999,i);
+                break;
+            }else delete_last_knight();
+        };
+    }
+    delete opponent;
+    return num_of_knight>0 ? true : false;
+};
 
+bool ArmyKnights::fight_Tornbery(int event_ordered){
+    int type = opponent->getType();
+    int lvO = (event_ordered+6)%10+1;
+    Baseopponent * opponent = new BaseOpponent(meet_Tornbery,0,0, lvO);
+    for(int i =num_of_knight;i>=0;i--){
+        if(knight[i]->fight(opponent)){
+            int gil = knight[i]->getGil();
+            if (gil>999){
+                knight[i]->changeGil(999);
+                passGil(gil-999,i);
+                break;
+            }else delete_last_knight();
+        };
+    }
+    delete opponent;
+    return num_of_knight>0 ? true : false;
+};
+
+
+bool ArmyKnights::fight_QueenOfCards(int event_ordered){
+    int type = opponent->getType();
+    int lvO = (event_ordered+7)%10+1;
+    Baseopponent * opponent = new BaseOpponent(meet_QueensOfCards,0,0, lvO);
+    for(int i =num_of_knight;i>=0;i--){
+        if(knight[i]->fight(opponent)){
+            int gil = knight[i]->getGil();
+            if (gil>999){
+                knight[i]->changeGil(999);
+                passGil(gil-999,i);
+                break;
+            }else delete_last_knight();
+        };
+    }
+    delete opponent;
+    return num_of_knight>0 ? true : false;
+};
+
+void meet_NinaDeRings(){
+    for(int i = 0;i<num_of_knight;i++){
+    int type = knight[i]->getType();
+    if (type == PALADIN && knight[i]->gethp()==knight[i]<(knight[i]->getmaxhp())/3){
+        knight[i]->changehp(knight[i]+(knight[i]->getmaxhp())/5);
+    }else{
+        if (knight[i]->getGil()>=50 && knight[i]->gethp()==knight[i]<(knight[i]->getmaxhp())/3){
+            knight[i]->changeGil(-50);
+            knight[i]->changehp(knight[i]+(knight[i]->getmaxhp())/5);
+            }
+        }
+    }
 }
+
+void meet_DurianGarden(){
+    for(int i =0;i<num_of_knight;i++){
+        knight[i]->changehp(knight[i]->getmaxhp());
+    }
+}
+
+
+bool fight_OmegaWeapon(int event_ordered);
+
+
+bool fight_Hades(int event_ordered);
+
+
+bool fight_Ultimecia(int event_ordered){};
+
+
+bool ArmyKnights::adventure(Events * events){
+    int numofevent = events->count();
+    for(int i= 0;i<numofevent;i++){
+        int event_id = events->get(i);
+        bool temp = event_process(i,event_id);
+        if(temp){ 
+            printInfo();
+        }else return 0;
+    }
+};
+
+
 int ArmyKnights::count() const{
     return num_of_knight;
 };
 
+BaseKnight * ArmyKnights::lastKnight() const{
+    if(num_of_knight == 0)
+        return nullptr;
+    else
+        return knights[num_of_knight-1];
+}
+
+bool ArmyKnights::event_process(int event_ordered, int event_id ){
+    if (event_ordered<=5) return fight_1_to_5(event_ordered, event_id);
+    else if (event_ordered == 6) return fight_Tornbery(event_ordered);
+    else if (event_ordered == 7) return fight_QueenOfCards(event_ordered);
+    else if (event_ordered == 8) return fight_NinaDeRings(event_ordered);
+    else if (event_ordered == 9) return fight_DurianGarden(event_ordered);
+    else if (event_ordered == 10) return fight_OmegaWeapon(event_ordered);
+    else if (event_ordered == 11) return fight_Hades(event_ordered);
+}
+
 /* * * END implementation of class ArmyKnights * * */
+
+
+
+
 
 /* * * BEGIN implementation of class KnightAdventure * * */
 KnightAdventure::KnightAdventure() {
