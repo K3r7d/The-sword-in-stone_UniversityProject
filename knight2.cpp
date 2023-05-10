@@ -70,7 +70,57 @@ string BaseBag::toString() const {
     return result;
 }
 
-BaseItem* BaseBag::takePhoenixDown(){
+BaseItem* BaseBag::takePhoenixDownExcept(ItemType type){
+    BaseItem * temp = head;
+    BaseItem * prev = nullptr;
+    if(type == PHOENIXDOWNI){
+    while(temp != nullptr){
+        if(temp ->getItemType() != ANTIDOTE && temp ->getItemType() != PHOENIXDOWNI){
+            if(prev == nullptr){
+                head = temp->next;
+            }else{
+                prev->next = temp->next;
+            }
+            phoenixdown--;
+            return temp;
+        }
+        prev = temp;
+        temp = temp->next;
+    }
+    }else if(type == PHOENIXDOWNII){
+    while(temp != nullptr){
+        if(temp ->getItemType() != ANTIDOTE && temp ->getItemType() != PHOENIXDOWNII && temp ->getItemType() != PHOENIXDOWNI){
+            if(prev == nullptr){
+                head = temp->next;
+            }else{
+                prev->next = temp->next;
+            }
+            phoenixdown--;
+            return temp;
+        }
+        prev = temp;
+        temp = temp->next;
+    }
+    }else if(type == PHOENIXDOWNIII){
+    while(temp != nullptr){
+        if(temp ->getItemType() != ANTIDOTE && temp ->getItemType() != PHOENIXDOWNIII && temp ->getItemType() != PHOENIXDOWNII && temp ->getItemType() != PHOENIXDOWNI){
+            if(prev == nullptr){
+                head = temp->next;
+            }else{
+                prev->next = temp->next;
+            }
+            phoenixdown--;
+            return temp;
+        }
+        prev = temp;
+        temp = temp->next;
+    }
+}
+    return nullptr;
+    
+}
+
+BaseItem* BaseBag::takeAnyPhoenixDown(){
     BaseItem * temp = head;
     BaseItem * prev = nullptr;
     while(temp != nullptr){
@@ -80,6 +130,27 @@ BaseItem* BaseBag::takePhoenixDown(){
             }else{
                 prev->next = temp->next;
             }
+            phoenixdown--;
+            return temp;
+        }
+        prev = temp;
+        temp = temp->next;
+    }
+    return nullptr;
+    
+}
+
+BaseItem* BaseBag::takeAntidote(){
+    BaseItem * temp = head;
+    BaseItem * prev = nullptr;
+    while(temp != nullptr){
+        if(temp ->getItemType() == ANTIDOTE){
+            if(prev == nullptr){
+                head = temp->next;
+            }else{
+                prev->next = temp->next;
+            }
+            antidote--;
             return temp;
         }
         prev = temp;
@@ -88,25 +159,6 @@ BaseItem* BaseBag::takePhoenixDown(){
     return nullptr;
 }
 
-// BaseItem* BaseBag::takePhoenixDown() {
-//     BaseItem* temp = head;
-//     BaseItem* prev = nullptr;
-
-//     while (temp != nullptr) {
-//         if (head->getItemType() != ANTIDOTE) {
-//             if (prev == nullptr) {
-//                 head = temp->next;
-//             } else {
-//                 prev->next = temp->next;
-//             }
-//             return temp;
-//         } else {
-//             temp = temp->next;
-//         }
-//     }
-
-//     return nullptr;
-// }
 
 
 /* * * END implementation of class BaseBag * * */
@@ -236,7 +288,10 @@ void NormalKnight::fight(BaseOpponent* opponent){
 }
 
 void BaseKnight::LoseTornbery(){
-    if (antidote>0) {antidote--;}
+    if (bag->getAntidote()>0) {
+           this->antidote--;
+            bag->takeAntidote();
+    }
         else{
             for(int i = 0;i<3;i++){
                 bag->removeFirst();
@@ -248,10 +303,14 @@ void BaseKnight::LoseTornbery(){
 
 void BaseKnight::HandleHP(){
     if (hp<=0){
-        BaseItem* temp = bag->takePhoenixDown();
+        BaseItem* temp = bag->takeAnyPhoenixDown();
         if(temp != nullptr){
             temp->use(this);
-            bag->removeFirst();
+        }
+    }else if(hp<=maxhp/4){
+        BaseItem* temp = bag->takePhoenixDownExcept(PHOENIXDOWNI);
+        if(temp != nullptr){
+            temp->use(this);
         }
     }
     if(hp<=0 && gil>=100){
@@ -409,7 +468,9 @@ bool ArmyKnights::fight_OmegaWeapon(){
             knight[i]->setHP(0);
             knight[i]->HandleHP();
             if(knight[i]->getHP()<=0) deletelastKnight();
-            if(num_of_knight==0) return false;
+            if(num_of_knight==0){
+                printInfo();
+                 return false;}
         }
     }
     return false;
@@ -417,7 +478,7 @@ bool ArmyKnights::fight_OmegaWeapon(){
 
 bool ArmyKnights::fight_Hades(){
     if(Hades) return true;
-    for(int i = num_of_knight-1;i>=0;i++){
+    for(int i = num_of_knight-1;i>=0;i--){
         if((knight[i]->getKnightType() == PALADIN && knight[i]->getLevel()>=8)|| knight[i]->getLevel()==10){
             Hades = true;
             PaladinShield = true;
@@ -425,8 +486,13 @@ bool ArmyKnights::fight_Hades(){
         }else{
             knight[i]->setHP(0);
             knight[i]->HandleHP();
-            if(knight[i]->getHP()<=0) deletelastKnight();
-            if(num_of_knight==0) return false;
+            if(knight[i]->getHP()<=0) {
+                deletelastKnight();
+            }
+            if(num_of_knight==0){ 
+                printInfo();
+                return false;
+                }
         }
     }
     return false;
@@ -437,14 +503,21 @@ bool ArmyKnights::fight_Ultimecia(){
     else if(hasGuinevereHair()&&hasLancelotSpear()&&hasPaladinShield()){
         int HP_Ultimecia = 5000;
         double knight_base_dmg[] = {0.05,0.06,0.75};
-        for(int i = num_of_knight-1;i>=0;i++){
+        for(int i = num_of_knight-1;i>=0;i--){
             KnightType type = knight[i]->getKnightType();
             int knight_level = knight[i]->getLevel();
             int knight_HP = knight[i]->getHP();
             if(type == LANCELOT) HP_Ultimecia -= knight_base_dmg[0]*knight_level*knight_HP;
             else if(type == PALADIN) HP_Ultimecia -= knight_base_dmg[1]*knight_level*knight_HP;
             else if(type == DRAGON) HP_Ultimecia -= knight_base_dmg[2]*knight_level*knight_HP;
-            deletelastKnight();
+            if (HP_Ultimecia >=0) {
+                deletelastKnight();
+            }
+            
+            if(num_of_knight==0) {
+                printInfo();
+                return false;
+            }
         }
         if( HP_Ultimecia <= 0 )return true;
         else return false;
@@ -459,7 +532,9 @@ void ArmyKnights::getPhoenixDown(int type){
     if (type == 3) temp = new PhoenixDownIII();
     if (type == 4) temp = new PhoenixDownIV();
     for(int i = num_of_knight -1 ;i>=0;i--){
-        if(knight[i]->getBag()->insertFirst(temp)) return;
+        if(knight[i]->getBag()->insertFirst(temp)) {;
+            knight[i]->getBag()->increasePhoenixDown();
+            return;}
     }
     delete temp;
     return;

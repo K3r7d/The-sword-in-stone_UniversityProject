@@ -42,6 +42,7 @@ public:
     BaseBag * getBag() const { return bag; }
     KnightType getKnightType() const { return knightType; }
     void setHP(int hp) { this->hp = hp; }
+    
     void setLevel(int level) { this->level = level; }
     void setGil(int gil) { this->gil = gil; }
     virtual void LoseTornbery();
@@ -171,8 +172,15 @@ public:
     virtual string toString() const ;
     virtual void removeFirst();
     virtual BaseItem * getHead() const { return head; }
-    virtual BaseItem * takePhoenixDown();
-
+    virtual BaseItem * takePhoenixDownExcept(ItemType);
+    virtual BaseItem * takeAnyPhoenixDown();
+    virtual BaseItem * takeAntidote();
+    int getAntidote() const { return antidote; }
+    int getPhoenixDown() const { return phoenixdown; }
+    void decreaseAntidote() {antidote--; }
+    void decreasePhoenixDown() {phoenixdown--; }
+    void increaseAntidote() {antidote++; }
+    void increasePhoenixDown() {phoenixdown++; }
     bool isfull() const { return count() == max_size; }
     bool isempty() const { return count() == 0; }
     int count() const{ return phoenixdown+antidote;}
