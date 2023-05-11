@@ -306,11 +306,25 @@ void BaseKnight::HandleHP(){
         BaseItem* temp = bag->takeAnyPhoenixDown();
         if(temp != nullptr){
             temp->use(this);
+            return;
         }
-    }else if(hp<=maxhp/4){
+    }else if(hp<(maxhp/4)){
         BaseItem* temp = bag->takePhoenixDownExcept(PHOENIXDOWNI);
         if(temp != nullptr){
             temp->use(this);
+            return;
+        }
+    }else if(hp<(maxhp/3)){
+        BaseItem* temp = bag->takePhoenixDownExcept(PHOENIXDOWNII);
+        if(temp != nullptr){
+            temp->use(this);
+            return;
+        }
+    }else if(hp<(maxhp/2)){
+        BaseItem* temp = bag->takePhoenixDownExcept(PHOENIXDOWNIII);
+        if(temp != nullptr){
+            temp->use(this);
+            return;
         }
     }
     if(hp<=0 && gil>=100){
