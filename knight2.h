@@ -6,7 +6,8 @@ enum KnightType { PALADIN = 0, LANCELOT, DRAGON, NORMAL };
 enum ItemType {ANTIDOTE = 0,PHOENIXDOWN,PHOENIXDOWNI,PHOENIXDOWNII,
                 PHOENIXDOWNIII,PHOENIXDOWNIV};
 enum OpponentType {MADBEAR = 1,BANDIT = 2,LORDLUPIN = 3,ELF = 4,
-                    TROLL = 5,TORNBERY = 6,QUEENOFCARDS = 7, OMEGAWEAPON = 10,
+                    TROLL = 5,TORNBERY = 6,QUEENOFCARDS = 7,NINADERINGS = 8,
+                    DURIANGARDEN = 9, OMEGAWEAPON = 10,
                     HADES = 11};
 // #define DEBUG
 class BaseItem;
@@ -30,7 +31,7 @@ public:
     static BaseKnight * create(int id, int maxhp, int level, int gil, int antidote, int phoenixdownI);
     string toString() const;
     virtual ~BaseKnight() = default;
-    virtual void fight(BaseOpponent *opponent) = 0;
+    virtual bool fight(BaseOpponent *opponent) = 0;
 
 
     virtual int getID() const { return id; }
@@ -47,6 +48,7 @@ public:
     void setGil(int gil) { this->gil = gil; }
     virtual void LoseTornbery();
     void HandleHP();
+    
 };
 
 
@@ -108,7 +110,8 @@ class PhoenixDownIII: public BaseItem{
         else return false;
     }
     void use(BaseKnight * knight){
-        knight->setHP(knight->getMaxHP());
+        if(knight->getHP()<=0) knight->setHP(knight->getMaxHP()/3);
+        else knight->setHP(knight->getHP()+knight->getMaxHP()/4);
     }
     string toString() const {
         return "PhoenixIII";
@@ -125,7 +128,8 @@ class PhoenixDownIV: public BaseItem{
         else return false;
     }
     void use(BaseKnight * knight){
-        knight->setHP(knight->getMaxHP());
+        if (knight->getHP()<=0) knight->setHP(knight->getMaxHP()/2);
+        else knight->setHP(knight->getHP()+knight->getMaxHP()/5);
     }
     string toString() const {
         return "PhoenixIV";
@@ -188,25 +192,127 @@ public:
 
 class BaseOpponent{
     protected:
-    int opponentType;
     int gil;
     int level;
     int basedamage;
+    OpponentType opponentType;
     public:
-    BaseOpponent(int opponentType,int gil,int level, int basedamage){
-        this->opponentType = opponentType;
-        this->gil = gil;
-        this->basedamage = basedamage;
-        this->level = level;
-    };
     virtual ~BaseOpponent() = default;
-    int getOpponentType() const { return opponentType; }
+    OpponentType getOpponentType() const { return opponentType; }
     int getGil() const { return gil; }
     int getLevel() const { return level; }
     int getBasedamage() const { return basedamage; }
 };
 
+class MadBear : public BaseOpponent{
+    public:
+    MadBear(int level){
+        this->gil = 100;
+        this->basedamage = 10;
+        this->level = level;
+        this->opponentType = MADBEAR;
+    };
+};
 
+class Bandit : public BaseOpponent{
+    public:
+    Bandit(int level){
+        this->gil = 150;
+        this->basedamage = 15;
+        this->level = level;
+        this->opponentType = BANDIT;
+    };
+};
+
+class LordLupin :public BaseOpponent{
+    public:
+    LordLupin(int level){
+        this->gil = 450;
+        this->basedamage = 45;
+        this->level = level;
+        this->opponentType = LORDLUPIN;
+    };
+};
+
+class Elf :public BaseOpponent{
+    public:
+    Elf(int level){
+        this->gil = 750;
+        this->basedamage = 75;
+        this->level = level;
+        this->opponentType = ELF;
+    };
+};
+
+class Troll : public BaseOpponent{
+    public:
+    Troll(int level){
+        this->gil = 800;
+        this->basedamage = 95;
+        this->level = level;
+        this->opponentType = TROLL;
+    };
+};
+
+class Tornbery : public BaseOpponent{
+    public:
+    Tornbery(int level){
+        this->gil = 0;
+        this->basedamage = 0;
+        this->level = level;
+        this->opponentType = TORNBERY;
+    };
+};
+
+class QueenOfCards : public BaseOpponent{
+    public:
+    QueenOfCards(int level){
+        this->gil = 0;
+        this->basedamage = 0;
+        this->level = level;
+        this->opponentType = QUEENOFCARDS;
+    };
+};
+
+class NinaDeRings : public BaseOpponent{
+    public:
+    NinaDeRings(int level){
+        this->gil = 0;
+        this->basedamage = 0;
+        this->level = level;
+        this->opponentType = NINADERINGS;
+    };
+};
+
+class DurianGarden : public BaseOpponent{
+    public:
+    DurianGarden(int level){
+        this->gil = 0;
+        this->basedamage = 0;
+        this->level = level;
+        this->opponentType = DURIANGARDEN;
+    };
+};
+
+class OmegaWeapon : public BaseOpponent{
+    public:
+    OmegaWeapon(int level){
+        this->gil = 0;
+        this->basedamage = 0;
+        this->level = level;
+        this->opponentType = OMEGAWEAPON;
+    };
+};
+
+class Hades : public BaseOpponent{
+    public:
+    Hades(int level){
+        this->opponentType = HADES;
+        this->gil = 0;
+        this->basedamage = 0;
+        this->level = 0;
+    };
+};
 
 
 class PaladinKnight : public BaseKnight {
@@ -221,7 +327,7 @@ public:
         this->bag = new BaseBag(antidote, phoenixdownI,65535);
         this->knightType = PALADIN;
     };
-    void fight(BaseOpponent *opponent);
+    bool fight(BaseOpponent *opponent);
 };
 
 class LancelotKnight : public BaseKnight {
@@ -234,10 +340,10 @@ public:
         this->gil = gil;
         this->level = level;
         this->antidote = antidote;
-        this->bag = new BaseBag(antidote, phoenixdownI,14);
+        this->bag = new BaseBag(antidote, phoenixdownI,16);
         this->knightType = LANCELOT;
     };
-    void fight(BaseOpponent *opponent);
+    bool fight(BaseOpponent *opponent);
 };
 
 class DragonKnight : public BaseKnight {
@@ -249,11 +355,11 @@ public:
         this->hp = maxhp;
         this->gil = gil;
         this->level = level;
-        this->antidote = antidote;
-        this->bag = new BaseBag(antidote, phoenixdownI,16);
+        this->antidote = 0;
+        this->bag = new BaseBag(antidote, phoenixdownI,14);
         this->knightType = DRAGON;
     };
-    void fight(BaseOpponent *opponent);
+    bool fight(BaseOpponent *opponent);
 };
 
 class NormalKnight : public BaseKnight {
@@ -268,7 +374,7 @@ public:
         this->bag = new BaseBag(antidote, phoenixdownI,19);
         this->knightType = NORMAL;
     };
-    void fight(BaseOpponent *opponent);
+    bool fight(BaseOpponent *opponent);
 };
 
 
@@ -287,9 +393,7 @@ public:
     ~ArmyKnights() = default;
     bool adventure (Events * events);
     bool HandleEvent (int,int);
-    bool fight_creep(int,int);
-    bool fight_Tornbery(int);
-    bool fight_QueenofCards(int);
+    
     bool meet_NinaDeRing();
     bool meet_DurianGarden();
     bool fight_OmegaWeapon();
@@ -303,12 +407,14 @@ public:
     bool hasLancelotSpear() const{return LancelotSpear;};
     bool hasGuinevereHair() const{return GuinevereHair;};
     bool hasExcaliburSword() const{return ExcaliburSword;};
-
+    void PassItem(BaseItem* item, int index);
     void getPhoenixDown(int);
     void printInfo() const;
     void printResult(bool win) const;
     void PassGil(int gil, int index);
-
+    void PassAntidote_Dragon(int index){};
+    void deleteArmy();
+    bool fight(BaseOpponent *opponent);
 };
 
 

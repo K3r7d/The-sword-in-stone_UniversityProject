@@ -27,6 +27,7 @@ bool isPythagorean(int num) {
 
 /* * * BEGIN implementation of class BaseBag * * */
 bool BaseBag::insertFirst(BaseItem * Item){
+    if(this->count()==max_size) return false;
     if (this->count() == 0){
         Item->next = nullptr;
         head = Item;
@@ -186,15 +187,27 @@ BaseKnight* BaseKnight::create(int id, int maxhp, int level, int gil, int antido
     } else if (maxhp == 888) {
         knight = new LancelotKnight(id, maxhp, level, gil, antidote,phoenixdownI);
     } else if (isPythagorean(maxhp)) {
-        knight = new DragonKnight(id, maxhp, level, gil, antidote,phoenixdownI);
+        knight = new DragonKnight(id, maxhp, level, gil, 0 ,phoenixdownI);
     } else {
         knight = new NormalKnight(id, maxhp, level, gil, antidote, phoenixdownI);
     }
     return knight;
 }
 
-void PaladinKnight::fight(BaseOpponent* opponent){
+bool PaladinKnight::fight(BaseOpponent* opponent){
     int type = opponent->getOpponentType();
+    if (type == OMEGAWEAPON){
+        if((this->hp == this->maxhp) && (this->level == 10)){
+            this->gil = 999;
+            this->level = 10;
+            return true;
+        }else{
+            this->hp = 0;
+            HandleHP();
+        };
+    }
+
+
     if (type <=5){
         this->gil+= opponent->getGil();
     }
@@ -210,11 +223,22 @@ void PaladinKnight::fight(BaseOpponent* opponent){
             LoseTornbery();
         }
     }
-
+    return this->hp>0;
 }
 
-void LancelotKnight::fight(BaseOpponent* opponent){
+bool LancelotKnight::fight(BaseOpponent* opponent){
     int type = opponent->getOpponentType();
+    if (type == OMEGAWEAPON){
+        if((this->hp == this->maxhp) && (this->level == 10)){
+            this->gil = 999;
+            this->level = 10;
+            return true;
+        }else{
+            this->hp = 0;
+            HandleHP();
+            return this->hp>0;
+        };
+    }
     if (type <=5){
         this->gil+= opponent->getGil();
     }
@@ -232,10 +256,17 @@ void LancelotKnight::fight(BaseOpponent* opponent){
             this->gil /=2;
         }
     }
+    return this->hp>0;
 }
 
-void DragonKnight::fight(BaseOpponent* opponent){
+bool DragonKnight::fight(BaseOpponent* opponent){
     int type = opponent->getOpponentType();
+    if (type == OMEGAWEAPON){
+        this->gil = 999;
+        this->level = 10;
+        return true;
+        
+    }
     if(this->level>=opponent->getLevel()){
         if (type <=5){
             this->gil += opponent->getGil();
@@ -257,10 +288,32 @@ void DragonKnight::fight(BaseOpponent* opponent){
             this->gil /=2;
         }
     }
+    return this->hp>0;
 }
 
-void NormalKnight::fight(BaseOpponent* opponent){
+bool NormalKnight::fight(BaseOpponent* opponent){
     int type = opponent->getOpponentType();
+    if (type == OMEGAWEAPON){
+        if((this->hp == this->maxhp) && (this->level == 10)){
+            this->gil = 999;
+            this->level = 10;
+            return true;
+        }else{
+            this->hp = 0;
+            HandleHP();
+            return this->hp>0;
+        };
+    }
+
+    if(type == HADES){
+        if(this->level == 10){
+            return true;
+        }else{
+            this->hp = 0;
+            HandleHP();
+        }
+    }
+
     if(this->level>=opponent->getLevel()){
         if (type <=5){
             this->gil += opponent->getGil();
@@ -285,6 +338,7 @@ void NormalKnight::fight(BaseOpponent* opponent){
             this->gil /=2;
         }
     }
+    return this->hp>0;
 }
 
 void BaseKnight::LoseTornbery(){
@@ -393,58 +447,63 @@ void ArmyKnights::PassGil(int gil, int index){
     }
 }
 
-bool ArmyKnights::fight_creep(int event_ordered,int event_id){
-    int gils[] ={100,150,450,750,800};
-    int basedmg[] = {10,15,45,75,95};
-    int LvO = (event_ordered+event_id)%10 + 1;
-    BaseOpponent * opponent = new BaseOpponent(event_id, gils[event_id-1], LvO, basedmg[event_id-1] );
-    for(int i = num_of_knight-1;i>=0;i--){
-        knight[i]->fight(opponent);
-        if(knight[i]->getHP()<=0) {
-            deletelastKnight();
-        }else{
-            int gil = knight[i]->getGil();
-            if(gil>=999){
-                knight[i]->setGil(999);
-               PassGil(gil-999,i-1);
-            }else break;
+
+
+bool ArmyKnights::fight_Ultimecia(){
+    if(hasExcaliburSword()) return true;
+    else if(hasGuinevereHair()&&hasLancelotSpear()&&hasPaladinShield()){
+        int HP_Ultimecia = 5000;
+        double knight_base_dmg[] = {0.05,0.06,0.75};
+        for(int i = num_of_knight-1;i>=0;i--){
+            KnightType type = knight[i]->getKnightType();
+            int knight_level = knight[i]->getLevel();
+            int knight_HP = knight[i]->getHP();
+            if(type == LANCELOT) HP_Ultimecia -= knight_base_dmg[0]*knight_level*knight_HP;
+            else if(type == PALADIN) HP_Ultimecia -= knight_base_dmg[1]*knight_level*knight_HP;
+            else if(type == DRAGON) HP_Ultimecia -= knight_base_dmg[2]*knight_level*knight_HP;
+            if (HP_Ultimecia >=0) {
+                deletelastKnight();
+            }
+            
+            if(num_of_knight==0) {
+                printInfo();
+                return false;
+            }
         }
-    }
-    delete opponent;
-    if (num_of_knight == 0) return false;
-    else return true;
+        if( HP_Ultimecia <= 0 )return true;
+        else {deleteArmy();
+        printInfo();return false;}
+    } else{deleteArmy();
+    printInfo(); return false;}   
+    return false;
 }
 
-bool ArmyKnights::fight_Tornbery(int event_ordered){
-    int LvO = (event_ordered+6)%10+1;
-    BaseOpponent * opponent = new BaseOpponent(6, 0, LvO,0 ); 
-    for(int i = num_of_knight-1;i>=0;i--){
-        knight[i]->fight(opponent);
-        if(knight[i]->getHP()<=0) {
-            deletelastKnight();
-        }else{
-            int gil = knight[i]->getGil();
-            if(gil>=999){
-                knight[i]->setGil(999);
-               PassGil(gil-999,i-1);
-            }else break;
-        }
+void ArmyKnights::PassItem(BaseItem* item,int index){
+    for(int i = index;i>=0;i--){
+        if(knight[i]->getBag()->insertFirst(item)) return;
     }
-    delete opponent;
-    if (num_of_knight == 0) return false;
-    else return true;
 }
-
-bool ArmyKnights::fight_QueenofCards(int event_ordered){
-    int LvO = (event_ordered+7)%10+1;
-    BaseOpponent * opponent = new BaseOpponent(7, 0, LvO,0);
-    lastKnight()->fight(opponent);
-    if(lastKnight()->getGil()>999){
-        lastKnight()->setGil(999);
-       PassGil(lastKnight()->getGil()-999,num_of_knight-2);
+void ArmyKnights::deleteArmy(){
+    for(int i = num_of_knight-1;i>=0;i--){
+        delete knight[i];
     }
-    delete opponent;
-    return true;
+    delete[] knight;
+    num_of_knight = 0;
+}
+void ArmyKnights::getPhoenixDown(int type){
+    BaseItem * temp = nullptr;
+    if (type == 1) temp = new PhoenixDownI();
+    if (type == 2) temp = new PhoenixDownII();
+    if (type == 3) temp = new PhoenixDownIII();
+    if (type == 4) temp = new PhoenixDownIV();
+    for(int i = num_of_knight -1 ;i>=0;i--){
+        if(knight[i]->getBag()->insertFirst(temp)) {;
+            knight[i]->getBag()->increasePhoenixDown();
+            return;}
+        else if(i!=0){PassItem(temp,i-1);}
+    }
+    delete temp;
+    return;
 }
 
 bool ArmyKnights::meet_NinaDeRing(){
@@ -469,6 +528,34 @@ bool ArmyKnights::meet_DurianGarden(){
     return true;
 }
 
+bool ArmyKnights::fight(BaseOpponent * opponent){
+    if (opponent->getOpponentType() == OMEGAWEAPON && OmegaWeapon) return true;
+    if (opponent->getOpponentType() == HADES && Hades) return true;
+    if (opponent->getOpponentType() == NINADERINGS) return meet_NinaDeRing();
+    if (opponent->getOpponentType() == DURIANGARDEN) return meet_DurianGarden();
+
+    for(int i = num_of_knight-1;i>=0;i--){
+        if(knight[i]->fight(opponent)){
+            if(knight[i]->getGil()>999){
+                PassGil(knight[i]->getGil()-999,i-1);
+                knight[i]->setGil(999);
+            }
+            return true;
+        }else{
+            deletelastKnight();
+            
+            if(num_of_knight==0) {
+            printInfo();
+            return false;
+        }else return true;
+        }
+        if(num_of_knight==0) {
+            printInfo();
+            return false;
+        }
+    }
+    return num_of_knight>0;
+}
 bool ArmyKnights::fight_OmegaWeapon(){
     if(OmegaWeapon)return true;
     for (int i = num_of_knight-1;i>=0;i--){
@@ -479,15 +566,23 @@ bool ArmyKnights::fight_OmegaWeapon(){
             return true;
         }
         else{
+            OmegaWeapon = true;
             knight[i]->setHP(0);
             knight[i]->HandleHP();
-            if(knight[i]->getHP()<=0) deletelastKnight();
+            if(knight[i]->getHP()<=0) {
+                deletelastKnight();
+                if(num_of_knight==0) {
+                    printInfo();
+                    return false;
+                }
+                return true;
+            }
             if(num_of_knight==0){
                 printInfo();
-                 return false;}
+                 return false;} else return true;
         }
     }
-    return false;
+    return true;
 }
 
 bool ArmyKnights::fight_Hades(){
@@ -498,78 +593,53 @@ bool ArmyKnights::fight_Hades(){
             PaladinShield = true;
             return true;
         }else{
+            Hades = true;
             knight[i]->setHP(0);
             knight[i]->HandleHP();
             if(knight[i]->getHP()<=0) {
                 deletelastKnight();
+                if(num_of_knight==0) {
+                    printInfo();
+                    return false;
+                }else return true;
             }
             if(num_of_knight==0){ 
                 printInfo();
                 return false;
-                }
+            }else return true;
         }
     }
-    return false;
+    return true;
 }
 
-bool ArmyKnights::fight_Ultimecia(){
-    if(hasExcaliburSword()) return true;
-    else if(hasGuinevereHair()&&hasLancelotSpear()&&hasPaladinShield()){
-        int HP_Ultimecia = 5000;
-        double knight_base_dmg[] = {0.05,0.06,0.75};
-        for(int i = num_of_knight-1;i>=0;i--){
-            KnightType type = knight[i]->getKnightType();
-            int knight_level = knight[i]->getLevel();
-            int knight_HP = knight[i]->getHP();
-            if(type == LANCELOT) HP_Ultimecia -= knight_base_dmg[0]*knight_level*knight_HP;
-            else if(type == PALADIN) HP_Ultimecia -= knight_base_dmg[1]*knight_level*knight_HP;
-            else if(type == DRAGON) HP_Ultimecia -= knight_base_dmg[2]*knight_level*knight_HP;
-            if (HP_Ultimecia >=0) {
-                deletelastKnight();
-            }
-            
-            if(num_of_knight==0) {
-                printInfo();
-                return false;
-            }
-        }
-        if( HP_Ultimecia <= 0 )return true;
-        else return false;
-    } else return false;   
-    return false;
-}
-
-void ArmyKnights::getPhoenixDown(int type){
-    BaseItem * temp = nullptr;
-    if (type == 1) temp = new PhoenixDownI();
-    if (type == 2) temp = new PhoenixDownII();
-    if (type == 3) temp = new PhoenixDownIII();
-    if (type == 4) temp = new PhoenixDownIV();
-    for(int i = num_of_knight -1 ;i>=0;i--){
-        if(knight[i]->getBag()->insertFirst(temp)) {;
-            knight[i]->getBag()->increasePhoenixDown();
-            return;}
-    }
-    delete temp;
-    return;
-}
 
 bool ArmyKnights::HandleEvent(int event_ordered, int event_id){
-    if(event_id == 1 || event_id == 2 || event_id == 3 || event_id == 4 || event_id == 5){
-        return fight_creep(event_ordered,event_id);
+    int LvO = (event_ordered+event_id)%10 +1;
+    BaseOpponent * opponent = nullptr;
+    if(event_id == 1){
+        opponent = new MadBear(LvO);
+
+    }else if(event_id == 2){
+        opponent = new Bandit(LvO);
+    }else if(event_id == 3){
+        opponent = new LordLupin(LvO);
+    }else if(event_id == 4){
+        opponent = new Elf(LvO);
+    }else if(event_id == 5){
+        opponent = new Troll(LvO);
     }else if(event_id == 6){
-        return fight_Tornbery(event_ordered);
+        opponent = new Tornbery(LvO);
     }else if(event_id == 7){
-        return fight_QueenofCards(event_ordered);
+        opponent = new QueenOfCards(LvO);
     }else if(event_id == 8){
-        return meet_NinaDeRing();
+        opponent = new NinaDeRings(LvO);
     }else if(event_id == 9){
-        return meet_DurianGarden();
+        opponent = new DurianGarden(LvO);
     }else if(event_id == 10){
         return fight_OmegaWeapon();
     }else if(event_id == 11){
         return fight_Hades();
-    }else if (event_id == 95) {
+    }else if(event_id == 95){
         PaladinShield = true;
         return true;
     }else if(event_id == 96){
@@ -578,26 +648,31 @@ bool ArmyKnights::HandleEvent(int event_ordered, int event_id){
     }else if(event_id == 97){
         GuinevereHair = true;
         return true;
-    }else if(event_id == 98 && PaladinShield && LancelotSpear && GuinevereHair){
+    }else if(event_id == 98 ){
+        if(PaladinShield && LancelotSpear && GuinevereHair){
         ExcaliburSword = true;
+        }
         return true;
     }else if(event_id == 99){
         return fight_Ultimecia();
     }else if(event_id == 112){
         getPhoenixDown(2);
+        return true;
     }else if(event_id == 113){
         getPhoenixDown(3);
+        return true;
     }else if(event_id == 114){
         getPhoenixDown(4);
+        return true;
     }
-    return true;
+    return fight(opponent);
 }
 
 bool ArmyKnights::adventure(Events * events){
     for(int i=0;i<events->count();i++){
         int event_id = events->get(i);
         if(HandleEvent(i,event_id)) printInfo();
-        else return 0;;
+        else return 0;
     }
     return true;
 }
